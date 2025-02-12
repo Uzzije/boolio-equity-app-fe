@@ -18,6 +18,13 @@ interface Investor {
   percentage: number
 }
 
+interface Breakdown {
+    breakdownId: string | null;
+    breakdownName?: string;
+    total_shares: number;
+    investors: Investor[];
+  }
+
 const colors = ["hsl(173 58% 39%)", "hsl(12 76% 61%)", "hsl(197 37% 24%)", "hsl(43 74% 66%)", "hsl(27 87% 67%)"]
 
 export default function EquityCalculator({ breakdownId }: Props) {
@@ -36,23 +43,29 @@ export default function EquityCalculator({ breakdownId }: Props) {
     }
   }, [])
 
+  useEffect(() => {
+    if (breakdownId) {
+      // TODO: Load breakdown data using breakdownId
+      console.log('Loading breakdown:', breakdownId)
+    }
+  }, [breakdownId])
+
   const addInvestor = () => {
-    const newId = (investors.length + 1).toString()
-    setInvestors([...investors, { id: newId, name: "", percentage: 0 }])
+    setInvestors([...investors, { id: null, name: "", percentage: 0 }])
   }
 
   const removeInvestor = (id: string) => {
     setInvestors(investors.filter((investor) => investor.id !== id))
   }
 
-  const updateInvestor = (id: string, field: keyof Investor, value: string | number) => {
-    setInvestors(investors.map((investor) => (investor.id === id ? { ...investor, [field]: value } : investor)))
+  const updateInvestor = (index: number, field: keyof Investor, value: string | number) => {
+    setInvestors(investors.map((investor, i) => (i === index ? { ...investor, [field]: value } : investor)))
   }
 
-  const updatePercentage = (id: string, newPercentage: number) => {
+  const updatePercentage = (index: number, newPercentage: number) => {
     setInvestors(
-      investors.map((investor) => {
-        if (investor.id === id) {
+      investors.map((investor, i) => {
+        if (i === index) {
           return { ...investor, percentage: newPercentage }
         }
         return investor
@@ -62,10 +75,21 @@ export default function EquityCalculator({ breakdownId }: Props) {
 
   const saveBreakdown = () => {
     if (breakdownName) {
-      setSavedBreakdowns([...savedBreakdowns, { name: breakdownName, investors: [...investors] }])
-      setBreakdownName("")
+        const breakdownData: Breakdown = {
+          breakdownId: null,
+          breakdownName: breakdownName,
+          total_shares: totalShares,
+          investors: investors.map(inv => ({
+            id: inv.id,
+            name: inv.name || "",
+            percentage: inv.percentage
+          }))
+        }
+        console.log('Saving breakdown:', breakdownData)
+        setSavedBreakdowns([...savedBreakdowns, { name: breakdownName, investors: [...investors] }])
+        setBreakdownName("")
+      }
     }
-  }
 
   const loadBreakdown = (breakdown: { name: string; investors: Investor[] }) => {
     setInvestors(breakdown.investors)
@@ -108,11 +132,11 @@ export default function EquityCalculator({ breakdownId }: Props) {
 
           <div className="space-y-6" ref={containerRef}>
             {investors.map((investor, index) => (
-              <div key={investor.id} className="space-y-2">
+              <div key={`investor-${index}`} className="space-y-2">
                 <div className="flex items-center gap-4">
                   <Input
                     value={investor.name}
-                    onChange={(e) => investor.id && updateInvestor(investor.id, "name", e.target.value)}
+                    onChange={(e) => updateInvestor(index, "name", e.target.value)}
                     placeholder="Investor name"
                     className="w-48"
                   />
@@ -122,7 +146,7 @@ export default function EquityCalculator({ breakdownId }: Props) {
                     min={0}
                     max={100}
                     step={0.1}
-                    onValueChange={([value]) => investor.id && updatePercentage(investor.id, value)}
+                    onValueChange={([value]) => updatePercentage(index, value)}
                     className="mt-2"
                   />
                   </div>
@@ -159,7 +183,7 @@ export default function EquityCalculator({ breakdownId }: Props) {
             <div className="h-8 flex rounded-lg overflow-hidden">
               {investors.map((investor, index) => (
                 <div
-                  key={investor.id}
+                  key={`viz-investor-${index}`}
                   style={{
                     width: `${investor.percentage}%`,
                     backgroundColor: colors[index % colors.length],
