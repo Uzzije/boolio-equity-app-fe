@@ -148,6 +148,9 @@ export default function EquityCalculator({ breakdownId }: Props) {
                     step={0.1}
                     onValueChange={([value]) => updatePercentage(index, value)}
                     className="mt-2"
+                    style={{
+                      '--slider-color': colors[index % colors.length]
+                    } as React.CSSProperties}
                   />
                   </div>
                   <div className="w-36 text-sm text-muted-foreground">
