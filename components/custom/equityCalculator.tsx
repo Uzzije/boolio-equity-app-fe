@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Plus, Save, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,13 +14,13 @@ interface Props {
 }
 
 interface Investor {
-  id: string | null
+  id?: string | null
   name?: string
   percentage: number
 }
 
 interface Breakdown {
-    breakdown_id: string | null;
+    breakdown_id?: string | null;
     breakdown_name?: string;
     total_shares: number;
     investors: Investor[];
@@ -36,6 +37,7 @@ export default function EquityCalculator({ breakdownId }: Props) {
   const [totalShares, setTotalShares] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
   const [sliderWidth, setSliderWidth] = useState(0)
+  const router = useRouter()
 
   useEffect(() => {
     if (containerRef.current) {
@@ -44,11 +46,37 @@ export default function EquityCalculator({ breakdownId }: Props) {
   }, [])
 
   useEffect(() => {
-    if (breakdownId) {
-      // TODO: Load breakdown data using breakdownId
-      console.log('Loading breakdown:', breakdownId)
-    }
-  }, [breakdownId])
+    const fetchBreakdown = async () => {
+      if (breakdownId) {
+        try {
+          const response = await fetch(`https://boolio-equity-app-be.onrender.com/api/breakdown/${breakdownId}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          const investorsWithNumberPercentages = data.investors.map((inv: any) => ({
+            ...inv,
+            percentage: Number(inv.percentage)
+          }));
+          
+          setInvestors(investorsWithNumberPercentages);
+          setBreakdownName(data.breakdown_name);
+          setTotalShares(data.total_shares);
+        } catch (error) {
+          console.error('Error fetching breakdown:', error);
+        }
+      }
+    };
+
+    fetchBreakdown();
+  }, [breakdownId]);
 
   const addInvestor = () => {
     setInvestors([...investors, { id: null, name: "", percentage: 0 }])
@@ -73,23 +101,41 @@ export default function EquityCalculator({ breakdownId }: Props) {
     )
   }
 
-  const saveBreakdown = () => {
+  const saveBreakdown = async () => {
     if (breakdownName) {
-        const breakdownData: Breakdown = {
-          breakdown_id: null,
-          breakdown_name: breakdownName,
-          total_shares: totalShares,
-          investors: investors.map(inv => ({
-            id: inv.id,
-            name: inv.name || "",
-            percentage: inv.percentage
-          }))
+      const breakdownData: Breakdown = {
+        breakdown_name: breakdownName,
+        total_shares: totalShares,
+        investors: investors.map(inv => ({
+          name: inv.name || "",
+          percentage: inv.percentage
+        }))
+      }
+
+      try {
+        const response = await fetch('https://boolio-equity-app-be.onrender.com/api/breakdown/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(breakdownData)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        console.log('Saving breakdown:', breakdownData)
-        setSavedBreakdowns([...savedBreakdowns, { name: breakdownName, investors: [...investors] }])
-        setBreakdownName("")
+
+        const savedData = await response.json();
+        console.log('Breakdown saved successfully:', savedData);
+        setSavedBreakdowns([...savedBreakdowns, { name: breakdownName, investors: [...investors] }]);
+        setBreakdownName("");
+        router.push(`/${savedData.breakdown_id}`);
+      } catch (error) {
+        console.error('Error saving breakdown:', error);
+        // You might want to add error handling UI here
       }
     }
+  }
 
   const loadBreakdown = (breakdown: { name: string; investors: Investor[] }) => {
     setInvestors(breakdown.investors)
