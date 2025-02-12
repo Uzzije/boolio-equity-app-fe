@@ -114,7 +114,7 @@ export default function EquityCalculator({ breakdownId }: Props) {
               placeholder="Breakdown name"
               className="flex-1"
             />
-            <Button onClick={saveBreakdown} disabled={!breakdownName}>
+            <Button onClick={saveBreakdown} disabled={!breakdownName || totalPercentage > 100}>
               <Save className="h-4 w-4 mr-2" />
               Save Breakdown
             </Button>
