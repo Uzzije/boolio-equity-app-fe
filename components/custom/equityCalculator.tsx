@@ -54,8 +54,8 @@ export default function EquityCalculator({ breakdownId }: Props) {
     setInvestors([...investors, { id: null, name: "", percentage: 0 }])
   }
 
-  const removeInvestor = (id: string) => {
-    setInvestors(investors.filter((investor) => investor.id !== id))
+  const removeInvestor = (index: number) => {
+    setInvestors(investors.filter((_, i) => i !== index))
   }
 
   const updateInvestor = (index: number, field: keyof Investor, value: string | number) => {
@@ -156,7 +156,7 @@ export default function EquityCalculator({ breakdownId }: Props) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => investor.id && removeInvestor(investor.id)}
+                    onClick={() => removeInvestor(index)}
                     disabled={investors.length <= 1}
                   >
                     <Trash2 className="h-4 w-4" />
