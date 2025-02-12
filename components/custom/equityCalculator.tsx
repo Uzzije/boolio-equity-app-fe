@@ -19,8 +19,8 @@ interface Investor {
 }
 
 interface Breakdown {
-    breakdownId: string | null;
-    breakdownName?: string;
+    breakdown_id: string | null;
+    breakdown_name?: string;
     total_shares: number;
     investors: Investor[];
   }
@@ -76,8 +76,8 @@ export default function EquityCalculator({ breakdownId }: Props) {
   const saveBreakdown = () => {
     if (breakdownName) {
         const breakdownData: Breakdown = {
-          breakdownId: null,
-          breakdownName: breakdownName,
+          breakdown_id: null,
+          breakdown_name: breakdownName,
           total_shares: totalShares,
           investors: investors.map(inv => ({
             id: inv.id,
