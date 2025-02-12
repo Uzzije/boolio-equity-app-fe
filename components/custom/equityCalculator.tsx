@@ -36,14 +36,9 @@ export default function EquityCalculator({ breakdownId }: Props) {
   const [breakdownName, setBreakdownName] = useState("")
   const [totalShares, setTotalShares] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
-  const [sliderWidth, setSliderWidth] = useState(0)
   const router = useRouter()
 
-  useEffect(() => {
-    if (containerRef.current) {
-      setSliderWidth(containerRef.current.offsetWidth - 200) // Subtracting space for name input and buttons
-    }
-  }, [])
+ 
 
   useEffect(() => {
     const fetchBreakdown = async () => {
@@ -61,7 +56,7 @@ export default function EquityCalculator({ breakdownId }: Props) {
           }
 
           const data = await response.json();
-          const investorsWithNumberPercentages = data.investors.map((inv: any) => ({
+          const investorsWithNumberPercentages = data.investors.map((inv: Investor) => ({
             ...inv,
             percentage: Number(inv.percentage)
           }));
